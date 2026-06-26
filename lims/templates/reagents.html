@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:16px">
+  <h1>Reagents &amp; Inventory</h1>
+  <p class="sub">Reagent stock, lot numbers, expiry dates, and storage locations</p>
+</div>
+
+<div class="card" style="padding:12px 16px">
+<form method="get" class="filter-bar">
+  <div>
+    <div class="section-label">Status</div>
+    <select name="status">
+      <option value="">All Statuses</option>
+      {% for s in ["In Stock","Low Stock","Expired","Quarantined","Depleted"] %}
+      <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <div class="section-label">Category</div>
+    <select name="category">
+      <option value="">All Categories</option>
+      {% for c in ["Solvent","Acid/Modifier","Reagent Kit","Reference Standard","Culture Media","Buffer","Buffer Salt","Excipient"] %}
+      <option value="{{ c }}" {{ 'selected' if filters.category == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div style="padding-top:14px">
+    <button class="btn" type="submit">Filter</button>
+    <a href="{{ url_for('reagents_list') }}" class="btn btn-outline" style="margin-left:6px">Clear</a>
+  </div>
+</form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr>
+      <th>Reagent ID</th><th>Name</th><th>Category</th><th>Catalog #</th>
+      <th>Lot Number</th><th>Manufacturer</th><th>Quantity</th>
+      <th>Expiry</th><th>Storage</th><th>Status</th>
+    </tr></thead>
+    <tbody>
+    {% for r in reagents %}
+    {% set is_expired = r.status == 'Expired' %}
+    {% set is_low = r.status == 'Low Stock' %}
+    <tr class="{{ 'danger-row' if is_expired else ('alert-row' if is_low else '') }}">
+      <td class="mono" style="color:var(--muted)">{{ r.reagent_id }}</td>
+      <td style="font-weight:500;max-width:220px">{{ r.name }}</td>
+      <td>
+        <span class="tag">{{ r.category }}</span>
+      </td>
+      <td class="mono" style="font-size:12px;color:var(--muted)">{{ r.catalog_number }}</td>
+      <td class="mono" style="font-size:12px;color:var(--muted)">{{ r.lot_number }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ r.manufacturer }}</td>
+      <td style="font-weight:500">{{ r.quantity }} {{ r.unit }}</td>
+      <td style="{{ 'color:var(--bad);font-weight:600' if is_expired else '' }}">{{ r.expiry_date }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ r.storage_location }}</td>
+      <td>
+        {% if r.status == 'In Stock' %}<span class="badge b-InStock">In Stock</span>
+        {% elif r.status == 'Low Stock' %}<span class="badge b-LowStock">Low Stock</span>
+        {% elif r.status == 'Expired' %}<span class="badge b-Expired">Expired</span>
+        {% elif r.status == 'Quarantined' %}<span class="badge b-Quarantined">Quarantined</span>
+        {% elif r.status == 'Depleted' %}<span class="badge b-Depleted">Depleted</span>
+        {% else %}<span class="badge">{{ r.status }}</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="10" style="color:var(--muted);text-align:center;padding:20px">No reagents match the selected filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

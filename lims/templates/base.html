@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratory LIMS</title>
+<style>
+:root {
+  --bg:     #0f172a;
+  --panel:  #1e293b;
+  --panel2: #263044;
+  --ink:    #e2e8f0;
+  --muted:  #94a3b8;
+  --acc:    #38bdf8;
+  --ok:     #10b981;
+  --warn:   #f59e0b;
+  --bad:    #ef4444;
+  --purple: #a78bfa;
+  --teal:   #2dd4bf;
+  --br:     #334155;
+  --br2:    #475569;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* nav */
+nav { background: var(--panel); border-bottom: 1px solid var(--br); padding: 0 24px; display: flex; align-items: center; gap: 0; height: 52px; }
+nav .brand { font-weight: 700; font-size: 15px; color: var(--acc); margin-right: 32px; letter-spacing: -.3px; white-space: nowrap; }
+nav a { color: var(--muted); text-decoration: none; padding: 16px 14px; font-size: 13px; border-bottom: 2px solid transparent; display: inline-block; }
+nav a:hover, nav a.active { color: var(--ink); border-bottom-color: var(--acc); }
+
+/* layout */
+main { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+.sub { color: var(--muted); font-size: 13px; }
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+
+/* cards */
+.card { background: var(--panel); border: 1px solid var(--br); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+
+/* KPI tiles */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpi { background: var(--panel); border: 1px solid var(--br); border-radius: 8px; padding: 14px 16px; }
+.kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.kpi .value { font-size: 26px; font-weight: 700; margin: 4px 0 0; }
+.kpi .value.ok   { color: var(--ok); }
+.kpi .value.warn { color: var(--warn); }
+.kpi .value.bad  { color: var(--bad); }
+.kpi .value.acc  { color: var(--acc); }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--br); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--br); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.03); }
+a { color: var(--acc); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* badges */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.b-Released    { background: rgba(16,185,129,.15); color: #10b981; }
+.b-Approved    { background: rgba(16,185,129,.12); color: #34d399; }
+.b-Pass        { background: rgba(16,185,129,.15); color: #10b981; }
+.b-Received    { background: rgba(56,189,248,.12); color: #38bdf8; }
+.b-InProgress  { background: rgba(167,139,250,.15); color: #a78bfa; }
+.b-PendingReview { background: rgba(245,158,11,.12); color: #f59e0b; }
+.b-Requested   { background: rgba(56,189,248,.10); color: #7dd3fc; }
+.b-Completed   { background: rgba(16,185,129,.10); color: #6ee7b7; }
+.b-Reviewed    { background: rgba(16,185,129,.12); color: #34d399; }
+.b-Failed      { background: rgba(239,68,68,.15); color: #ef4444; }
+.b-Rejected    { background: rgba(239,68,68,.15); color: #ef4444; }
+.b-Fail        { background: rgba(239,68,68,.15); color: #ef4444; }
+.b-Active      { background: rgba(16,185,129,.12); color: #10b981; }
+.b-DueCalib    { background: rgba(245,158,11,.15); color: #f59e0b; }
+.b-OutOfService{ background: rgba(239,68,68,.15); color: #ef4444; }
+.b-Retired     { background: rgba(148,163,184,.12); color: #94a3b8; }
+.b-InStock     { background: rgba(16,185,129,.12); color: #10b981; }
+.b-LowStock    { background: rgba(245,158,11,.15); color: #f59e0b; }
+.b-Expired     { background: rgba(239,68,68,.15); color: #ef4444; }
+.b-Quarantined { background: rgba(239,68,68,.12); color: #f87171; }
+.b-Depleted    { background: rgba(148,163,184,.12); color: #94a3b8; }
+.b-Critical    { background: rgba(239,68,68,.15); color: #ef4444; }
+.b-High        { background: rgba(245,158,11,.12); color: #f59e0b; }
+.b-Routine     { background: rgba(148,163,184,.10); color: #94a3b8; }
+
+/* filter form */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+.filter-bar select, .filter-bar input { background: var(--panel); border: 1px solid var(--br2); border-radius: 6px; color: var(--ink); padding: 6px 10px; font-size: 13px; }
+.filter-bar select:focus, .filter-bar input:focus { outline: 1px solid var(--acc); }
+.btn { background: var(--acc); color: #0f172a; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn:hover { opacity: .88; }
+.btn-outline { background: transparent; border: 1px solid var(--br2); color: var(--muted); }
+.btn-outline:hover { border-color: var(--acc); color: var(--acc); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* misc */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tag { display: inline-block; background: var(--panel2); border: 1px solid var(--br); border-radius: 4px; padding: 2px 8px; font-size: 12px; margin: 2px 2px 2px 0; color: var(--muted); }
+.alert-row { background: rgba(245,158,11,.05); }
+.alert-row td { border-left: 2px solid var(--warn); }
+.danger-row td { border-left: 2px solid var(--bad); }
+.mono { font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">&#9877; Lab LIMS</span>
+  <a href="{{ url_for('dashboard') }}"      class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>
+  <a href="{{ url_for('samples_list') }}"   class="{{ 'active' if request.endpoint == 'samples_list' }}">Samples</a>
+  <a href="{{ url_for('tests_list') }}"     class="{{ 'active' if request.endpoint == 'tests_list' }}">Tests</a>
+  <a href="{{ url_for('instruments_list') }}" class="{{ 'active' if request.endpoint == 'instruments_list' }}">Instruments</a>
+  <a href="{{ url_for('reagents_list') }}"  class="{{ 'active' if request.endpoint == 'reagents_list' }}">Reagents</a>
+</nav>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:12px">
+  <a href="{{ url_for('samples_list') }}" style="color:var(--muted);font-size:13px">&larr; All Samples</a>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+  <div>
+    <h1>{{ sample.description }}</h1>
+    <p class="sub">
+      {{ sample.sample_id }} &middot; {{ sample.sample_type }} &middot;
+      Barcode: <span class="mono">{{ sample.barcode }}</span> &middot;
+      Received {{ sample.received_date }} by {{ sample.received_by }}
+    </p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    {% if sample.priority == 'Critical' %}<span class="badge b-Critical">Critical</span>
+    {% elif sample.priority == 'High' %}<span class="badge b-High">High</span>
+    {% else %}<span class="badge b-Routine">Routine</span>{% endif %}
+    {% set sc = sample.status | replace(' ','') %}
+    <span class="badge b-{{ sc }}">{{ sample.status }}</span>
+  </div>
+</div>
+
+<!-- Status update -->
+<div class="card" style="padding:12px 16px;margin-bottom:16px">
+  <form method="post" action="{{ url_for('update_sample_status', sample_id=sample.sample_id) }}" style="display:flex;gap:10px;align-items:center">
+    <span style="font-size:13px;color:var(--muted)">Update status:</span>
+    <select name="status" style="background:var(--panel2);border:1px solid var(--br);border-radius:6px;color:var(--ink);padding:5px 10px;font-size:13px">
+      {% for st in ["Received","In Progress","Pending Review","Approved","Released","Rejected"] %}
+      <option value="{{ st }}" {{ 'selected' if sample.status == st }}>{{ st }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-sm" type="submit">Save</button>
+  </form>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="section-label">Sample Details</div>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--muted);width:150px">Sample ID</td><td class="mono">{{ sample.sample_id }}</td></tr>
+        <tr><td style="color:var(--muted)">Barcode</td><td class="mono">{{ sample.barcode }}</td></tr>
+        <tr><td style="color:var(--muted)">Type</td><td>{{ sample.sample_type }}</td></tr>
+        <tr><td style="color:var(--muted)">Matrix</td><td>{{ sample.matrix }}</td></tr>
+        <tr><td style="color:var(--muted)">Volume / Mass</td><td>{{ sample.volume }}</td></tr>
+        <tr><td style="color:var(--muted)">Storage Location</td><td>{{ sample.storage_location }}</td></tr>
+        <tr><td style="color:var(--muted)">Priority</td><td>{{ sample.priority }}</td></tr>
+        <tr><td style="color:var(--muted)">Status</td><td>{{ sample.status }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Project & Client</div>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--muted);width:150px">Client</td><td>{{ sample.client }}</td></tr>
+        <tr><td style="color:var(--muted)">Project</td><td class="mono">{{ sample.project }}</td></tr>
+        <tr><td style="color:var(--muted)">Received Date</td><td>{{ sample.received_date }}</td></tr>
+        <tr><td style="color:var(--muted)">Received By</td><td>{{ sample.received_by }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Associated tests -->
+<div class="card">
+  <div class="section-label">Tests for This Sample</div>
+  {% if tests %}
+  <table>
+    <thead><tr>
+      <th>Test ID</th><th>Test Name</th><th>Method</th><th>Assigned To</th>
+      <th>Result</th><th>Spec</th><th>Date</th><th>Status</th><th>Pass/Fail</th>
+    </tr></thead>
+    <tbody>
+    {% for t in tests %}
+    {% set is_fail = t.pass_fail == 'Fail' %}
+    <tr class="{{ 'danger-row' if is_fail else '' }}">
+      <td class="mono" style="color:var(--muted)">{{ t.test_id }}</td>
+      <td>{{ t.test_name }}</td>
+      <td class="mono" style="font-size:11px;color:var(--muted)">{{ t.method }}</td>
+      <td style="color:var(--muted)">{{ t.assigned_to }}</td>
+      <td style="font-weight:600">{{ t.result }} {{ t.result_units if t.result else '' }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ t.specification }}</td>
+      <td style="color:var(--muted)">{{ t.result_date or '—' }}</td>
+      <td>
+        {% if t.status == 'Approved' %}<span class="badge b-Approved">Approved</span>
+        {% elif t.status == 'In Progress' %}<span class="badge b-InProgress">In Progress</span>
+        {% elif t.status == 'Requested' %}<span class="badge b-Requested">Requested</span>
+        {% elif t.status == 'Completed' %}<span class="badge b-Completed">Completed</span>
+        {% elif t.status == 'Failed' %}<span class="badge b-Failed">Failed</span>
+        {% else %}<span class="badge">{{ t.status }}</span>{% endif %}
+      </td>
+      <td>
+        {% if t.pass_fail == 'Pass' %}<span class="badge b-Pass">Pass</span>
+        {% elif t.pass_fail == 'Fail' %}<span class="badge b-Fail">Fail</span>
+        {% elif t.pass_fail %}{{ t.pass_fail }}
+        {% else %}<span style="color:var(--muted)">—</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--muted);font-size:13px">No tests registered for this sample.</p>
+  {% endif %}
+</div>
+
+{% if tests %}
+<div class="card" style="padding:12px 16px">
+  <div class="section-label">Test Notes</div>
+  {% for t in tests if t.notes %}
+  <div style="margin-bottom:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--acc)">{{ t.test_name }}</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:3px">{{ t.notes }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

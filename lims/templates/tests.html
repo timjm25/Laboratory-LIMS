@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:16px">
+  <h1>Tests</h1>
+  <p class="sub">All analytical and microbiological tests — filter by status, analyst or pass/fail</p>
+</div>
+
+<div class="card" style="padding:12px 16px">
+<form method="get" class="filter-bar">
+  <div>
+    <div class="section-label">Status</div>
+    <select name="status">
+      <option value="">All Statuses</option>
+      {% for s in ["Requested","In Progress","Completed","Reviewed","Approved","Failed"] %}
+      <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <div class="section-label">Assigned To</div>
+    <select name="assigned_to">
+      <option value="">All Analysts</option>
+      {% for a in ["Dr. Sarah Chen","James O'Brien","Maria Lopez"] %}
+      <option value="{{ a }}" {{ 'selected' if filters.assigned_to == a }}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <div class="section-label">Pass / Fail</div>
+    <select name="pass_fail">
+      <option value="">All</option>
+      <option value="Pass" {{ 'selected' if filters.pass_fail == 'Pass' }}>Pass</option>
+      <option value="Fail" {{ 'selected' if filters.pass_fail == 'Fail' }}>Fail</option>
+    </select>
+  </div>
+  <div style="padding-top:14px">
+    <button class="btn" type="submit">Filter</button>
+    <a href="{{ url_for('tests_list') }}" class="btn btn-outline" style="margin-left:6px">Clear</a>
+  </div>
+</form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr>
+      <th>Test ID</th><th>Test Name</th><th>Sample</th><th>Method</th>
+      <th>Assigned To</th><th>Result</th><th>Specification</th><th>Status</th><th>Pass/Fail</th>
+    </tr></thead>
+    <tbody>
+    {% for t in tests %}
+    {% set is_fail = t.pass_fail == 'Fail' %}
+    <tr class="{{ 'danger-row' if is_fail else '' }}">
+      <td class="mono" style="color:var(--muted)">{{ t.test_id }}</td>
+      <td>{{ t.test_name }}</td>
+      <td>
+        <a href="{{ url_for('sample_detail', sample_id=t.sample_id) }}" class="mono" style="font-size:12px">{{ t.sample_id }}</a>
+        {% if t.sample_type %}<div style="font-size:11px;color:var(--muted)">{{ t.sample_type }}</div>{% endif %}
+      </td>
+      <td class="mono" style="font-size:11px;color:var(--muted)">{{ t.method }}</td>
+      <td style="color:var(--muted)">{{ t.assigned_to }}</td>
+      <td style="font-weight:600">{{ t.result }} {{ t.result_units if t.result else '—' }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ t.specification }}</td>
+      <td>
+        {% if t.status == 'Approved' %}<span class="badge b-Approved">Approved</span>
+        {% elif t.status == 'In Progress' %}<span class="badge b-InProgress">In Progress</span>
+        {% elif t.status == 'Requested' %}<span class="badge b-Requested">Requested</span>
+        {% elif t.status == 'Completed' %}<span class="badge b-Completed">Completed</span>
+        {% elif t.status == 'Reviewed' %}<span class="badge b-Reviewed">Reviewed</span>
+        {% elif t.status == 'Failed' %}<span class="badge b-Failed">Failed</span>
+        {% else %}<span class="badge">{{ t.status }}</span>{% endif %}
+      </td>
+      <td>
+        {% if t.pass_fail == 'Pass' %}<span class="badge b-Pass">Pass</span>
+        {% elif t.pass_fail == 'Fail' %}<span class="badge b-Fail">Fail</span>
+        {% elif t.pass_fail %}{{ t.pass_fail }}
+        {% else %}<span style="color:var(--muted)">—</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:20px">No tests match the selected filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

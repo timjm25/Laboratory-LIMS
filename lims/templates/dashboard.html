@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div>
+    <h1>LIMS Dashboard</h1>
+    <p class="sub">Laboratory Information Management System — live triage view</p>
+  </div>
+</div>
+
+<!-- KPI tiles: samples -->
+<div class="section-label">Samples</div>
+<div class="kpi-grid" style="margin-bottom:24px">
+  <div class="kpi"><div class="label">Total Samples</div><div class="value acc">{{ stats.total_samples }}</div></div>
+  <div class="kpi"><div class="label">Open / Active</div><div class="value {{ 'warn' if stats.open_samples > 0 else 'ok' }}">{{ stats.open_samples }}</div></div>
+  <div class="kpi"><div class="label">Critical Priority</div><div class="value {{ 'bad' if stats.critical_samples > 0 else 'ok' }}">{{ stats.critical_samples }}</div></div>
+  <div class="kpi"><div class="label">Total Tests</div><div class="value acc">{{ stats.total_tests }}</div></div>
+  <div class="kpi"><div class="label">Pending Tests</div><div class="value {{ 'warn' if stats.pending_tests > 0 else 'ok' }}">{{ stats.pending_tests }}</div></div>
+  <div class="kpi"><div class="label">Tests Passed</div><div class="value ok">{{ stats.passed_tests }}</div></div>
+  <div class="kpi"><div class="label">Tests Failed</div><div class="value {{ 'bad' if stats.failed_tests > 0 else 'ok' }}">{{ stats.failed_tests }}</div></div>
+</div>
+
+<!-- KPI tiles: infrastructure -->
+<div class="section-label">Infrastructure & Inventory</div>
+<div class="kpi-grid" style="margin-bottom:24px">
+  <div class="kpi"><div class="label">Instruments</div><div class="value acc">{{ stats.total_instruments }}</div></div>
+  <div class="kpi"><div class="label">Due Calibration</div><div class="value {{ 'bad' if stats.instruments_due_calibration > 0 else 'ok' }}">{{ stats.instruments_due_calibration }}</div></div>
+  <div class="kpi"><div class="label">Out of Service</div><div class="value {{ 'bad' if stats.instruments_out_of_service > 0 else 'ok' }}">{{ stats.instruments_out_of_service }}</div></div>
+  <div class="kpi"><div class="label">Reagents</div><div class="value acc">{{ stats.total_reagents }}</div></div>
+  <div class="kpi"><div class="label">Expired</div><div class="value {{ 'bad' if stats.reagents_expired > 0 else 'ok' }}">{{ stats.reagents_expired }}</div></div>
+  <div class="kpi"><div class="label">Low Stock</div><div class="value {{ 'warn' if stats.reagents_low_stock > 0 else 'ok' }}">{{ stats.reagents_low_stock }}</div></div>
+</div>
+
+<div class="grid-2" style="margin-bottom:16px">
+
+  <!-- Samples by status -->
+  <div class="card">
+    <div class="section-label">Samples by Status</div>
+    {% for status, cnt in stats.by_sample_status.items() %}
+    {% set pct = ((cnt / stats.total_samples) * 100)|round(0)|int if stats.total_samples > 0 else 0 %}
+    <div style="display:flex;align-items:center;margin-bottom:8px;gap:10px">
+      <div style="width:140px;font-size:12px;color:var(--muted)">{{ status }}</div>
+      <div style="flex:1;background:var(--panel2);border-radius:4px;height:8px">
+        <div style="width:{{ pct }}%;background:var(--acc);height:8px;border-radius:4px;min-width:2px"></div>
+      </div>
+      <div style="width:30px;text-align:right;font-size:12px;font-weight:600">{{ cnt }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Samples by type -->
+  <div class="card">
+    <div class="section-label">Samples by Type</div>
+    {% for stype, cnt in stats.by_sample_type.items() %}
+    {% set pct = ((cnt / stats.total_samples) * 100)|round(0)|int if stats.total_samples > 0 else 0 %}
+    <div style="display:flex;align-items:center;margin-bottom:8px;gap:10px">
+      <div style="width:140px;font-size:12px;color:var(--muted)">{{ stype }}</div>
+      <div style="flex:1;background:var(--panel2);border-radius:4px;height:8px">
+        <div style="width:{{ pct }}%;background:var(--purple);height:8px;border-radius:4px;min-width:2px"></div>
+      </div>
+      <div style="width:30px;text-align:right;font-size:12px;font-weight:600">{{ cnt }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<div class="grid-2">
+
+  <!-- Pending tests -->
+  <div class="card">
+    <div class="section-label">Pending & In-Progress Tests</div>
+    {% if pending_tests %}
+    <table>
+      <thead><tr>
+        <th>Test ID</th><th>Test Name</th><th>Sample</th><th>Assigned</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+      {% for t in pending_tests %}
+      <tr>
+        <td class="mono">{{ t.test_id }}</td>
+        <td>{{ t.test_name }}</td>
+        <td><a href="{{ url_for('sample_detail', sample_id=t.sample_id) }}" style="color:var(--muted);font-size:12px">{{ t.sample_id }}</a></td>
+        <td style="font-size:12px;color:var(--muted)">{{ t.assigned_to }}</td>
+        <td>
+          {% if t.status == 'In Progress' %}<span class="badge b-InProgress">In Progress</span>
+          {% else %}<span class="badge b-Requested">Requested</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);font-size:13px">No pending tests.</p>
+    {% endif %}
+    <div style="margin-top:10px"><a href="{{ url_for('tests_list') }}" style="font-size:12px">View all tests &rarr;</a></div>
+  </div>
+
+  <!-- Attention required -->
+  <div class="card">
+    <div class="section-label">Attention Required</div>
+
+    {% if instruments_attention %}
+    <div style="font-size:12px;font-weight:600;color:var(--warn);margin-bottom:6px">Instruments</div>
+    {% for ins in instruments_attention %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--br)">
+      <div style="font-size:12px">{{ ins.name[:50] }}</div>
+      {% if ins.status == 'Due for Calibration' %}<span class="badge b-DueCalib">Due Calibration</span>
+      {% elif ins.status == 'Out of Service' %}<span class="badge b-OutOfService">Out of Service</span>
+      {% else %}<span class="badge">{{ ins.status }}</span>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if reagents_attention %}
+    <div style="font-size:12px;font-weight:600;color:var(--warn);margin:10px 0 6px">Reagents</div>
+    {% for r in reagents_attention %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--br)">
+      <div style="font-size:12px">{{ r.name[:45] }}</div>
+      {% if r.status == 'Expired' %}<span class="badge b-Expired">Expired</span>
+      {% elif r.status == 'Low Stock' %}<span class="badge b-LowStock">Low Stock</span>
+      {% else %}<span class="badge b-Quarantined">{{ r.status }}</span>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if not instruments_attention and not reagents_attention %}
+    <p style="color:var(--ok);font-size:13px">All instruments and reagents OK.</p>
+    {% endif %}
+
+    <div style="margin-top:10px;display:flex;gap:12px">
+      <a href="{{ url_for('instruments_list') }}" style="font-size:12px">Instruments &rarr;</a>
+      <a href="{{ url_for('reagents_list') }}" style="font-size:12px">Reagents &rarr;</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Recent samples -->
+<div class="card">
+  <div class="section-label">Recently Received Samples</div>
+  <table>
+    <thead><tr>
+      <th>Sample ID</th><th>Barcode</th><th>Type</th><th>Description</th>
+      <th>Received</th><th>Priority</th><th>Status</th>
+    </tr></thead>
+    <tbody>
+    {% for s in recent_samples %}
+    <tr>
+      <td><a href="{{ url_for('sample_detail', sample_id=s.sample_id) }}" class="mono">{{ s.sample_id }}</a></td>
+      <td class="mono" style="color:var(--muted)">{{ s.barcode }}</td>
+      <td>{{ s.sample_type }}</td>
+      <td style="color:var(--muted)">{{ s.description[:55] }}{% if s.description|length > 55 %}…{% endif %}</td>
+      <td style="color:var(--muted)">{{ s.received_date }}</td>
+      <td>
+        {% if s.priority == 'Critical' %}<span class="badge b-Critical">Critical</span>
+        {% elif s.priority == 'High' %}<span class="badge b-High">High</span>
+        {% else %}<span class="badge b-Routine">Routine</span>{% endif %}
+      </td>
+      <td>
+        {% set sc = s.status | replace(' ','') %}
+        <span class="badge b-{{ sc }}">{{ s.status }}</span>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top:10px"><a href="{{ url_for('samples_list') }}" style="font-size:12px">View all samples &rarr;</a></div>
+</div>
+
+{% endblock %}

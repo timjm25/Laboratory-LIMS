@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:16px">
+  <h1>Instruments</h1>
+  <p class="sub">Equipment register — calibration status and upcoming due dates</p>
+</div>
+
+<div class="card" style="padding:12px 16px">
+<form method="get" class="filter-bar">
+  <div>
+    <div class="section-label">Status</div>
+    <select name="status">
+      <option value="">All Statuses</option>
+      {% for s in ["Active","Due for Calibration","Out of Service","Retired"] %}
+      <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <div class="section-label">Department</div>
+    <select name="department">
+      <option value="">All Departments</option>
+      {% for d in ["Quality Control","Manufacturing","Engineering"] %}
+      <option value="{{ d }}" {{ 'selected' if filters.department == d }}>{{ d }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div style="padding-top:14px">
+    <button class="btn" type="submit">Filter</button>
+    <a href="{{ url_for('instruments_list') }}" class="btn btn-outline" style="margin-left:6px">Clear</a>
+  </div>
+</form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr>
+      <th>ID</th><th>Instrument Name</th><th>Model</th><th>Serial</th>
+      <th>Location</th><th>Department</th><th>Last Calibration</th><th>Next Calibration</th>
+      <th>Calibrated By</th><th>Status</th>
+    </tr></thead>
+    <tbody>
+    {% for ins in instruments %}
+    {% set is_oos = ins.status == 'Out of Service' %}
+    {% set is_due = ins.status == 'Due for Calibration' %}
+    <tr class="{{ 'danger-row' if is_oos else ('alert-row' if is_due else '') }}">
+      <td class="mono" style="color:var(--muted)">{{ ins.instrument_id }}</td>
+      <td style="font-weight:500">{{ ins.name }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ ins.model }}</td>
+      <td class="mono" style="font-size:11px;color:var(--muted)">{{ ins.serial_number }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ ins.location }}</td>
+      <td style="color:var(--muted)">{{ ins.department }}</td>
+      <td style="color:var(--muted)">{{ ins.last_calibration }}</td>
+      <td style="font-weight:500;{{ 'color:var(--bad)' if is_oos or is_due else '' }}">{{ ins.next_calibration }}</td>
+      <td style="font-size:12px;color:var(--muted)">{{ ins.calibrated_by }}</td>
+      <td>
+        {% if ins.status == 'Active' %}<span class="badge b-Active">Active</span>
+        {% elif ins.status == 'Due for Calibration' %}<span class="badge b-DueCalib">Due Calibration</span>
+        {% elif ins.status == 'Out of Service' %}<span class="badge b-OutOfService">Out of Service</span>
+        {% elif ins.status == 'Retired' %}<span class="badge b-Retired">Retired</span>
+        {% else %}<span class="badge">{{ ins.status }}</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="10" style="color:var(--muted);text-align:center;padding:20px">No instruments match the selected filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
